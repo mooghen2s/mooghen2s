@@ -36,8 +36,20 @@ var audio, audioContext, source, analyser, dataArray, bufferLength;
     }
   });
 
-  // Setup audio context for lip-sync
-  setupAudioContext('audio/test.wav');
+  // Setup play/pause button event listeners
+  document.getElementById('play-button').addEventListener('click', () => {
+    if (!audioContext) {
+      setupAudioContext('audio/test.wav');
+    } else {
+      audio.play();
+    }
+  });
+  
+  document.getElementById('pause-button').addEventListener('click', () => {
+    if (audio) {
+      audio.pause();
+    }
+  });
 })();
 
 function draggable(model) {
@@ -92,13 +104,6 @@ async function setupAudioContext(audioUrl) {
 
   bufferLength = analyser.frequencyBinCount;
   dataArray = new Uint8Array(bufferLength);
-
-  document.getElementById('play-button').addEventListener('click', () => {
-    audio.play();
-  });
-  document.getElementById('pause-button').addEventListener('click', () => {
-    audio.pause();
-  });
 
   function animate() {
     analyser.getByteFrequencyData(dataArray);
