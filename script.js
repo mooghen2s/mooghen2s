@@ -25,7 +25,7 @@ var model_proxy;
   model.y = innerHeight * 0.1;
 
   draggable(model);
-  //addFrame(model);
+  addFrame(model);
 
   // handle tapping
   model.on("hit", hitAreas => {
@@ -63,7 +63,7 @@ function addFrame(model) {
 
   model.addChild(foreground);
 
-  //checkbox("Model Frames", checked => foreground.visible = checked);
+  checkbox("Model Frames", checked => foreground.visible = checked);
 }
 
 // To be run in Console
