@@ -1,8 +1,8 @@
 // Setup Cubism Model and Pixi live2d
 const cubismModel = "test/hijiki.model3.json";
 const live2d = PIXI.live2d;
-
 var model_proxy;
+var audio, audioContext, source, analyser, dataArray, bufferLength;
 
 (async function main() {
   const app = new PIXI.Application({
@@ -14,7 +14,6 @@ var model_proxy;
 
   const models = await Promise.all([live2d.Live2DModel.from(cubismModel)]);
   const model = models[0];
-  
   model_proxy = model;
   app.stage.addChild(model);
 
@@ -67,40 +66,39 @@ function addFrame(model) {
   checkbox("Model Frames", checked => foreground.visible = checked);
 }
 
-// To be run in Console
-function playAudio(audio_link, volume = 1, expression = 0) {
-  model_proxy.speak(audio_link, volume, expression);
-}
-
 function checkbox(name, onChange) {
   const id = name.replace(/\W/g, "").toLowerCase();
   let checkbox = document.getElementById(id);
-
   if (!checkbox) {
     const p = document.createElement("p");
     p.innerHTML = `<input type="checkbox" id="${id}"> <label for="${id}">${name}</label>`;
     document.getElementById("control").appendChild(p);
     checkbox = p.firstChild;
   }
-
   checkbox.addEventListener("change", () => {
     onChange(checkbox.checked);
   });
-
   onChange(checkbox.checked);
 }
 
 async function setupAudioContext(audioUrl) {
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const audio = new Audio(audioUrl);
-  const source = audioContext.createMediaElementSource(audio);
-  const analyser = audioContext.createAnalyser();
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  audio = new Audio(audioUrl);
+  source = audioContext.createMediaElementSource(audio);
+  analyser = audioContext.createAnalyser();
   source.connect(analyser);
   analyser.connect(audioContext.destination);
   audio.play();
 
-  const bufferLength = analyser.frequencyBinCount;
-  const dataArray = new Uint8Array(bufferLength);
+  bufferLength = analyser.frequencyBinCount;
+  dataArray = new Uint8Array(bufferLength);
+
+  document.getElementById('play-button').addEventListener('click', () => {
+    audio.play();
+  });
+  document.getElementById('pause-button').addEventListener('click', () => {
+    audio.pause();
+  });
 
   function animate() {
     analyser.getByteFrequencyData(dataArray);
@@ -108,7 +106,7 @@ async function setupAudioContext(audioUrl) {
 
     // Map avgFrequency to mouth shape
     model_proxy.internalModel.coreModel.setParameterValueById("ParamMouthOpenY", avgFrequency / 255);
-    
+
     requestAnimationFrame(animate);
   }
   animate();
