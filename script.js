@@ -6,22 +6,22 @@ var model_proxy;
 
 (async function main() {
   const app = new PIXI.Application({
-  view: document.getElementById("canvas"),
-  autoStart: true,
-  resizeTo: window,
-  backgroundColor: 0x333333 });
+    view: document.getElementById("canvas"),
+    autoStart: true,
+    resizeTo: window,
+    backgroundColor: 0x333333
+  });
+
   const models = await Promise.all([live2d.Live2DModel.from(cubismModel)]);
-  const model = models[0]
+  const model = models[0];
   
   model_proxy = model;
   app.stage.addChild(model);
+
   // Scale the model
   const scaleX = innerWidth * 0.6 / model.width;
   const scaleY = innerHeight * 0.9 / model.height;
-
-  // fit the window
   model.scale.set(Math.min(scaleX, scaleY));
-
   model.y = innerHeight * 0.1;
 
   draggable(model);
@@ -36,6 +36,9 @@ var model_proxy;
       model.expression();
     }
   });
+
+  // Setup audio context for lip-sync
+  setupAudioContext('audio/test.wav');
 })();
 
 function draggable(model) {
@@ -60,27 +63,22 @@ function addFrame(model) {
   foreground.width = model.internalModel.width;
   foreground.height = model.internalModel.height;
   foreground.alpha = 0.2;
-
   model.addChild(foreground);
-
   checkbox("Model Frames", checked => foreground.visible = checked);
 }
 
 // To be run in Console
-function playAudio(audio_link, volume=1, expression=0) {
-    model_proxy.speak(audio_link, volume, expression);
+function playAudio(audio_link, volume = 1, expression = 0) {
+  model_proxy.speak(audio_link, volume, expression);
 }
-
 
 function checkbox(name, onChange) {
   const id = name.replace(/\W/g, "").toLowerCase();
-
   let checkbox = document.getElementById(id);
 
   if (!checkbox) {
     const p = document.createElement("p");
     p.innerHTML = `<input type="checkbox" id="${id}"> <label for="${id}">${name}</label>`;
-
     document.getElementById("control").appendChild(p);
     checkbox = p.firstChild;
   }
@@ -90,4 +88,28 @@ function checkbox(name, onChange) {
   });
 
   onChange(checkbox.checked);
+}
+
+async function setupAudioContext(audioUrl) {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const audio = new Audio(audioUrl);
+  const source = audioContext.createMediaElementSource(audio);
+  const analyser = audioContext.createAnalyser();
+  source.connect(analyser);
+  analyser.connect(audioContext.destination);
+  audio.play();
+
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+
+  function animate() {
+    analyser.getByteFrequencyData(dataArray);
+    const avgFrequency = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+
+    // Map avgFrequency to mouth shape
+    model_proxy.internalModel.coreModel.setParameterValueById("ParamMouthOpenY", avgFrequency / 255);
+    
+    requestAnimationFrame(animate);
+  }
+  animate();
 }
