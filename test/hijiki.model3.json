@@ -17,13 +17,13 @@
 					"Sound": "audio/test.wav"
 				},
 				{
-					"File": "motion/04.motion3.json"
+					"File": "motion/04.motion3.json",
 					"FadeInTime":0.5, 
 					"FadeOutTime":0.5, 
 					"Sound": "audio/test.wav"
 				},
 				{
-					"File": "motion/08.motion3.json"
+					"File": "motion/08.motion3.json",
 					"FadeInTime":0.5, 
 					"FadeOutTime":0.5, 
 					"Sound": "audio/test.wav"
